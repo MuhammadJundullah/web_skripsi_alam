@@ -1,0 +1,49 @@
+.navbar {
+    transition: background-color 0.3s ease;
+}
+
+body {
+    background:
+        radial-gradient(circle at top left, rgba(116, 198, 157, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(220, 53, 69, 0.12), transparent 28%),
+        linear-gradient(180deg, #f8fbf4 0%, #eef6ec 100%);
+    min-height: 100vh;
+}
+
+.app-navbar {
+    background: linear-gradient(90deg, #215732 0%, #2f6f3b 55%, #8a1c1c 100%);
+    box-shadow: 0 6px 18px rgba(33, 87, 50, 0.18);
+}
+
+.navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.navbar-dark .navbar-nav .nav-link:hover {
+    color: #fff;
+}
+
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: linear-gradient(180deg, #2a6036 0%, #214d2b 100%);
+        padding: 1rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .navbar-nav {
+        width: 100%;
+    }
+}

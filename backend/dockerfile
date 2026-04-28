@@ -1,0 +1,53 @@
+# ---- Tahap 1: Builder ----
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+# Instal dependensi sistem untuk build
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+# Buat virtual environment
+RUN python -m venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
+
+COPY requirements.txt .
+
+# STRATEGI INTEL: Install torch CPU secara eksplisit sebelum requirements lainnya
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ---- Tahap 2: Produksi ----
+FROM python:3.11-slim AS production
+
+WORKDIR /app
+
+# Salin venv dari builder
+COPY --from=builder /app/venv /app/venv
+
+# Runtime dependencies (Dihapus libgl1 karena kita pakai opencv-headless)
+# libglib2.0-0 tetap dibutuhkan untuk beberapa fungsi image processing
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libglib2.0-0 \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
+# Konfigurasi Environment
+ENV PATH="/app/venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PORT=7860
+
+# Keamanan: User non-root
+RUN useradd --create-home appuser
+USER appuser
+WORKDIR /home/appuser/app
+
+# Salin kode aplikasi
+COPY --chown=appuser:appuser . .
+
+EXPOSE 7860
+
+CMD ["supervisord", "-c", "/home/appuser/app/supervisord.conf"]

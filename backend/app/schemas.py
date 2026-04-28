@@ -1,0 +1,53 @@
+from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional, List
+
+# Base schema for a Job
+class JobBase(BaseModel):
+    filename: str
+
+# Schema for reading a Job from the API
+class Job(JobBase):
+    id: int
+    task_id: Optional[str] = None
+    status: str
+    upload_time: datetime
+    output_path: Optional[str] = None
+    completion_time: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True # orm_mode = True
+
+# Base schema for a Setting
+class SettingBase(BaseModel):
+    key: str
+    value: str
+
+# Schema for reading a Setting from the API
+class Setting(SettingBase):
+    class Config:
+        from_attributes = True # orm_mode = True
+
+# --- New Schemas for Image Detection ---
+
+class BoundingBox(BaseModel):
+    x1: float
+    y1: float
+    x2: float
+    y2: float
+
+class Detection(BaseModel):
+    class_name: str # Renamed from 'class' to avoid keyword clash
+    confidence: float
+    bbox: BoundingBox
+
+class DetectionSummary(BaseModel):
+    normal_count: int
+    abnormal_count: int
+    normal_percentage: float
+    abnormal_percentage: float
+
+class ImageDetectionResponse(BaseModel):
+    imageUrl: str
+    detections: List[Detection]
+    summary: DetectionSummary

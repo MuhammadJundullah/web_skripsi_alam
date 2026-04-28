@@ -1,0 +1,17 @@
+# Folder cache Python
+__pycache__/
+*.pyc
+
+# File sistem operasi
+.DS_Store
+
+# Folder environment (jika ada)
+.env
+.venv
+env/
+venv/
+
+# File sementara dari pemrosesan video
+/tmp/
+
+docker-compose.yml
