@@ -151,16 +151,16 @@
 
   <div class="row g-2 align-items-end">
     <div class="col-12 col-md-5">
-      <label class="form-label">Choose Image</label>
-      <input type="file" accept="image/*" on:change={handleImageSelect} class="form-control form-control-sm" />
+      <label class="form-label" for="image-upload">Choose Image</label>
+      <input id="image-upload" type="file" accept="image/*" on:change={handleImageSelect} class="form-control form-control-sm" />
     </div>
     <div class="col-12 col-md-auto">
-      <label class="form-label d-block invisible">.</label>
-      <button on:click={startCameraForPhoto} disabled={isCameraActiveForPhoto} class="btn btn-secondary btn-sm">Take Photo from Camera</button>
+      <div class="form-label d-block invisible" aria-hidden="true">.</div>
+      <button type="button" on:click={startCameraForPhoto} disabled={isCameraActiveForPhoto} class="btn btn-secondary btn-sm">Take Photo from Camera</button>
     </div>
     <div class="col-12 col-md-auto">
-      <label class="form-label d-block invisible">.</label>
-      <button on:click={uploadImage} disabled={!imageFile} class="btn btn-primary btn-sm">Detect Objects in Image</button>
+      <div class="form-label d-block invisible" aria-hidden="true">.</div>
+      <button type="button" on:click={uploadImage} disabled={!imageFile} class="btn btn-primary btn-sm">Detect Objects in Image</button>
     </div>
   </div>
 
@@ -172,8 +172,8 @@
           <video class="w-100 h-100" bind:this={videoElementForPhoto} autoplay muted playsinline></video>
         </div>
         <div class="d-flex gap-2">
-          <button on:click={capturePhoto} class="btn btn-primary btn-sm">Capture Photo</button>
-          <button on:click={stopCameraForPhoto} class="btn btn-outline-secondary btn-sm">Stop Camera</button>
+          <button type="button" on:click={capturePhoto} class="btn btn-primary btn-sm">Capture Photo</button>
+          <button type="button" on:click={stopCameraForPhoto} class="btn btn-outline-secondary btn-sm">Stop Camera</button>
         </div>
       </div>
     </div>

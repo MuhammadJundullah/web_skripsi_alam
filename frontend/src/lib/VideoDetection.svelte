@@ -102,15 +102,15 @@
     <h5 class="card-title">Batch Video Detection</h5>
     <div class="row g-2 align-items-end mb-3">
       <div class="col">
-        <label class="form-label">Choose a video file</label>
-        <input type="file" accept="video/*" on:change={handleVideoSelect} class="form-control" />
+        <label class="form-label" for="video-upload">Choose a video file</label>
+        <input id="video-upload" type="file" accept="video/*" on:change={handleVideoSelect} class="form-control" />
       </div>
       <div class="col-auto"> 
         <span class="text-muted">OR</span>
       </div>
       <div class="col-auto">
-        <label class="form-label">&nbsp;</label>
-        <button class="btn btn-secondary" on:click={openCamera}>Record from Camera</button>
+        <div class="form-label" aria-hidden="true">&nbsp;</div>
+        <button type="button" class="btn btn-secondary" on:click={openCamera}>Record from Camera</button>
       </div>
     </div>
 
@@ -118,7 +118,7 @@
       <div class="mb-3">
         <h6>Preview & Upload</h6>
         <video class="w-100 border rounded" src={videoPreviewUrl} controls muted></video>
-        <button on:click={uploadVideo} class="btn btn-primary mt-2">Detect Objects in Video</button>
+        <button type="button" on:click={uploadVideo} class="btn btn-primary mt-2">Detect Objects in Video</button>
       </div>
     {/if}
 
