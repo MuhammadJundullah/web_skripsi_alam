@@ -7,7 +7,7 @@
     }
 </script>
 
-<nav class="navbar navbar-expand-lg navbar-dark app-navbar">
+<nav class="navbar navbar-expand-lg navbar-light app-navbar">
     <div class="container-fluid">
         <Link class="navbar-brand" to="/">
             <img src="/pepper-leaf.svg" alt="Logo deteksi daun cabai" width="30" height="24" class="d-inline-block align-text-top">
