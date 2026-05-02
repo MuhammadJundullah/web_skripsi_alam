@@ -27,12 +27,15 @@ WORKDIR /app
 # Salin venv dari builder
 COPY --from=builder /app/venv /app/venv
 
-# Runtime dependencies (Dihapus libgl1 karena kita pakai opencv-headless)
-# libglib2.0-0 tetap dibutuhkan untuk beberapa fungsi image processing
+# Runtime dependencies for OpenCV/Ultralytics
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 \
     libglib2.0-0 \
-    libxcb1 \   
-    libx11-6 \   
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libxcb1 \
+    libx11-6 \
     supervisor \
     && rm -rf /var/lib/apt/lists/*
 
