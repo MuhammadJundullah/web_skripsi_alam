@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 
 // Default API base URL, will be overwritten by initialization
-export const apiBaseUrl = writable('https://sayidj-backend-yolo-coffee-app.hf.space');
+export const apiBaseUrl = writable('https://sayidj-backend-alam.hf.space');
 
 // Store for server stats
 export const serverStats = writable(null);

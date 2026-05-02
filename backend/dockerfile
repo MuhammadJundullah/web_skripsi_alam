@@ -1,24 +1,3 @@
-# ---- Tahap 1: Builder ----
-FROM python:3.11-slim AS builder
-
-WORKDIR /app
-
-# Instal dependensi sistem untuk build
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    cmake \
-    && rm -rf /var/lib/apt/lists/*
-
-# Buat virtual environment
-RUN python -m venv /app/venv
-ENV PATH="/app/venv/bin:$PATH"
-
-COPY requirements.txt .
-
-# STRATEGI INTEL: Install torch CPU secara eksplisit sebelum requirements lainnya
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
-RUN pip install --no-cache-dir -r requirements.txt
-
 # ---- Tahap 2: Produksi ----
 FROM python:3.11-slim AS production
 
@@ -27,10 +6,13 @@ WORKDIR /app
 # Salin venv dari builder
 COPY --from=builder /app/venv /app/venv
 
-# Runtime dependencies (Dihapus libgl1 karena kita pakai opencv-headless)
-# libglib2.0-0 tetap dibutuhkan untuk beberapa fungsi image processing
+# PERBAIKAN DI SINI:
+# Tambahkan libxcb1 dan dependensi pendukung lainnya 
+# agar OpenCV/Ultralytics tidak crash saat runtime.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
+    libxcb1 \
+    libx11-6 \
     supervisor \
     && rm -rf /var/lib/apt/lists/*
 
