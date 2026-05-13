@@ -8,9 +8,9 @@
   export let realtimeStreamingComponent;
 
   const intervalOptions = [
-    { label: 'High (10 FPS)', value: 100 },
-    { label: 'Medium (5 FPS)', value: 200 },
-    { label: 'Low (2 FPS)', value: 500 },
+    { label: 'Tinggi (10 FPS)', value: 100 },
+    { label: 'Sedang (5 FPS)', value: 200 },
+    { label: 'Rendah (2 FPS)', value: 500 },
   ];
 </script>
 

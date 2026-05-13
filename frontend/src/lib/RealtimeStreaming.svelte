@@ -22,7 +22,7 @@
   export function startStreaming() {
     // Logic from App.svelte's startStreaming
     if (isStreaming) return;
-    streamingStatus = "Starting camera...";
+    streamingStatus = "Menyalakan kamera...";
     try {
       const constraints = {
         video: {
@@ -34,13 +34,13 @@
       navigator.mediaDevices.getUserMedia(constraints).then(stream => {
         videoElement.srcObject = stream;
         videoElement.play().then(() => {
-          streamingStatus = "Connecting to server...";
+          streamingStatus = "Menghubungkan ke server...";
           const url = new URL($apiBaseUrl);
           const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
           const wsUrl = `${wsProtocol}//${url.host}/ws/stream/realtime`;
           streamingSocket = new WebSocket(wsUrl);
           streamingSocket.onopen = () => {
-            streamingStatus = "Connection open. Streaming...";
+            streamingStatus = "Koneksi terbuka. Streaming berjalan...";
             isStreaming = true;
             intervalId = setInterval(() => {
               if (streamingSocket.readyState === WebSocket.OPEN) sendFrame();
@@ -55,25 +55,25 @@
             }
           };
           streamingSocket.onclose = () => {
-            streamingStatus = "Connection closed.";
+            streamingStatus = "Koneksi ditutup.";
             stopStreaming(false);
           };
           streamingSocket.onerror = (error) => {
             console.error("WebSocket Error (Streaming):", error);
-            streamingStatus = "Connection error. See console.";
+            streamingStatus = "Terjadi kesalahan koneksi. Lihat console.";
             stopStreaming();
           };
         }).catch(error => {
           console.error("Failed to play video:", error);
-          streamingStatus = "Could not play video.";
+          streamingStatus = "Video tidak dapat diputar.";
         });
       }).catch(error => {
         console.error("Failed to start camera:", error);
-        streamingStatus = "Could not start camera. Check permissions.";
+        streamingStatus = "Kamera tidak dapat dijalankan. Periksa izin perangkat.";
       });
     } catch (error) {
       console.error("Failed to start camera:", error);
-      streamingStatus = "Could not start camera. Check permissions.";
+      streamingStatus = "Kamera tidak dapat dijalankan. Periksa izin perangkat.";
     }
   }
 
@@ -92,8 +92,8 @@
       lastImageUrl = null;
     }
     if (processedImageElement) processedImageElement.src = '';
-    if (streamingStatus.startsWith("Connection open")) {
-      streamingStatus = "Streaming stopped.";
+    if (streamingStatus.startsWith("Koneksi terbuka")) {
+      streamingStatus = "Streaming dihentikan.";
     }
   }
 
@@ -111,7 +111,7 @@
   function toggleFullscreen() {
     if (processedImageElement && document.fullscreenElement !== processedImageElement) {
       processedImageElement.requestFullscreen().catch(err => {
-        alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+        alert(`Gagal mengaktifkan mode layar penuh: ${err.message} (${err.name})`);
       });
     } else {
       if (document.exitFullscreen) {
@@ -138,21 +138,21 @@
 </script>
 
 <section class="bg-white p-4 rounded-3 shadow-sm mb-4">
-  <h2 class="h4 mb-3">Real-time Detection</h2>
+  <h2 class="h4 mb-3">Deteksi Penyakit Daun Cabai Real-time</h2>
 
   <div class="row g-2 align-items-end">
     <div class="col-auto">
-      <button on:click={startStreaming} disabled={isStreaming} class="btn btn-primary btn-sm">Start Streaming</button>
+      <button on:click={startStreaming} disabled={isStreaming} class="btn btn-primary btn-sm">Mulai Streaming</button>
     </div>
     <div class="col-auto">
-      <button on:click={() => stopStreaming()} disabled={!isStreaming} class="btn btn-outline-primary btn-sm">Stop Streaming</button>
+      <button on:click={() => stopStreaming()} disabled={!isStreaming} class="btn btn-outline-primary btn-sm">Hentikan Streaming</button>
     </div>
     <div class="col-auto">
       <button on:click={toggleFullscreen} disabled={!isStreaming} class="btn btn-outline-secondary btn-sm">Fullscreen</button>
     </div>
 
     <div class="col-12 col-md-3">
-      <label for="interval-select" class="form-label mb-1">Frame Rate</label>
+      <label for="interval-select" class="form-label mb-1">Kecepatan Frame</label>
       <select id="interval-select" class="form-select form-select-sm" bind:value={streamingInterval} disabled={isStreaming}>
         {#each intervalOptions as option}
           <option value={option.value}>{option.label}</option>
@@ -161,14 +161,14 @@
     </div>
 
     <div class="col-12 col-md-4">
-      <label for="camera-select" class="form-label mb-1">Camera</label>
+      <label for="camera-select" class="form-label mb-1">Kamera</label>
       <select id="camera-select" class="form-select form-select-sm"
               bind:value={selectedCameraId} disabled={isStreaming || availableCameras.length === 0}>
         {#if availableCameras.length === 0}
-          <option value="">No cameras found</option>
+          <option value="">Kamera tidak ditemukan</option>
         {/if}
         {#each availableCameras as camera}
-          <option value={camera.deviceId}>{camera.label || `Camera ${camera.deviceId.substring(0, 6)}`}</option>
+          <option value={camera.deviceId}>{camera.label || `Kamera ${camera.deviceId.substring(0, 6)}`}</option>
         {/each}
       </select>
     </div>
@@ -179,7 +179,7 @@
   <div class="row g-3">
     <div class="col-12 col-lg-6">
       <div class="card h-100">
-        <div class="card-header">Live Camera</div>
+        <div class="card-header">Kamera Langsung</div>
         <div class="card-body">
           <div class="ratio ratio-4x3">
             <video class="w-100 h-100" bind:this={videoElement} autoplay muted playsinline></video>
@@ -190,9 +190,9 @@
 
     <div class="col-12 col-lg-6">
       <div class="card h-100">
-        <div class="card-header">Processed Stream</div>
+        <div class="card-header">Hasil Deteksi Langsung</div>
         <div class="card-body">
-          <img class="img-fluid border" bind:this={processedImageElement} alt="Processed stream" />
+          <img class="img-fluid border" bind:this={processedImageElement} alt="Hasil deteksi real-time penyakit daun cabai" />
         </div>
       </div>
     </div>

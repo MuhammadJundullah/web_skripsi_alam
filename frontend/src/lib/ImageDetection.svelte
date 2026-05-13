@@ -11,9 +11,7 @@
   export let videoElementForPhoto;
   export let selectedCameraId;
 
-  // --- Variables for detection summary ---
-  // This prop will hold the individual detection objects from the backend.
-  // It's expected to be an array of objects, e.g., [{ class_name: 'normal', confidence: 0.9, bbox: {...} }, ...]
+  // Detection summary from backend.
   export let detectionResults = []; 
   
   // This variable will hold the full JSON response from the backend, including the summary.
@@ -23,14 +21,6 @@
   function formatPercentage(value) {
     return value.toFixed(2); // Display with 2 decimal places
   }
-
-  // Reactive statement to update counts and percentages whenever detectionResults change
-  // REMOVED: Frontend recalculation of counts and percentages.
-  // We will now rely on the backend's summary.
-  // $: { ... }
-
-  // --- End of removed section ---
-
 
   let canvasElement;
 
@@ -42,12 +32,12 @@
     imageResultUrl = null; // Clear previous results
     detectionResults = []; // Clear previous detection results
     detectionResponse = null; // Clear previous full response
-    imageStatus = `Ready to process ${file.name}.`;
+    imageStatus = `Siap memproses ${file.name}.`;
   }
 
   export async function uploadImage() {
     if (!imageFile) return;
-    imageStatus = "Uploading and processing image...";
+    imageStatus = "Mengunggah dan memproses gambar...";
     imageResultUrl = null; // Clear previous results
     detectionResults = []; // Clear previous detection results
     detectionResponse = null; // Clear previous full response
@@ -83,7 +73,7 @@
         console.log('Summary from backend:', detectionResponse.summary);
       }
 
-      imageStatus = "Processing complete. Results available.";
+      imageStatus = "Pemrosesan selesai. Hasil deteksi tersedia.";
     } catch (error) {
       console.error("Image upload or detection error:", error);
       imageStatus = `Error: ${error.message}`;
@@ -93,7 +83,7 @@
   }
 
   export async function startCameraForPhoto() {
-    imageStatus = "Starting camera for photo...";
+      imageStatus = "Menyalakan kamera untuk mengambil foto...";
     try {
       isCameraActiveForPhoto = true;
       await tick();
@@ -108,10 +98,10 @@
       videoElementForPhoto.srcObject = stream;
       photoCaptureStream = stream;
       await videoElementForPhoto.play();
-      imageStatus = "Camera active. Capture photo.";
+      imageStatus = "Kamera aktif. Silakan ambil foto.";
     } catch (error) {
       console.error("Failed to start camera for photo:", error);
-      imageStatus = "Could not start camera for photo. Check permissions.";
+      imageStatus = "Kamera untuk foto tidak dapat dijalankan. Periksa izin perangkat.";
     }
   }
 
@@ -128,7 +118,7 @@
       imageResultUrl = null; // Clear previous results
       detectionResults = []; // Clear previous detection results
       detectionResponse = null; // Clear previous full response
-      imageStatus = "Photo captured. Ready for detection.";
+      imageStatus = "Foto berhasil diambil. Siap untuk deteksi.";
       stopCameraForPhoto();
     }, 'image/png');
   }
@@ -142,38 +132,38 @@
       videoElementForPhoto.srcObject = null;
     }
     isCameraActiveForPhoto = false;
-    imageStatus = "Camera stopped.";
+    imageStatus = "Kamera dihentikan.";
   }
 </script>
 
 <section class="bg-white p-4 rounded-3 shadow-sm mb-4">
-  <h2 class="h4 mb-3">Image File Detection</h2>
+  <h2 class="h4 mb-3">Deteksi Penyakit pada Gambar Daun Cabai</h2>
 
   <div class="row g-2 align-items-end">
     <div class="col-12 col-md-5">
-      <label class="form-label" for="image-upload">Choose Image</label>
+      <label class="form-label" for="image-upload">Pilih Gambar Daun Cabai</label>
       <input id="image-upload" type="file" accept="image/*" on:change={handleImageSelect} class="form-control form-control-sm" />
     </div>
     <div class="col-12 col-md-auto">
       <div class="form-label d-block invisible" aria-hidden="true">.</div>
-      <button type="button" on:click={startCameraForPhoto} disabled={isCameraActiveForPhoto} class="btn btn-secondary btn-sm">Take Photo from Camera</button>
+      <button type="button" on:click={startCameraForPhoto} disabled={isCameraActiveForPhoto} class="btn btn-secondary btn-sm">Ambil Foto dari Kamera</button>
     </div>
     <div class="col-12 col-md-auto">
       <div class="form-label d-block invisible" aria-hidden="true">.</div>
-      <button type="button" on:click={uploadImage} disabled={!imageFile} class="btn btn-primary btn-sm">Detect Objects in Image</button>
+      <button type="button" on:click={uploadImage} disabled={!imageFile} class="btn btn-primary btn-sm">Deteksi Penyakit pada Gambar</button>
     </div>
   </div>
 
   {#if isCameraActiveForPhoto}
     <div class="card my-3">
-      <div class="card-header">Camera Capture</div>
+      <div class="card-header">Ambil Gambar dari Kamera</div>
       <div class="card-body">
         <div class="ratio ratio-4x3 mb-2">
           <video class="w-100 h-100" bind:this={videoElementForPhoto} autoplay muted playsinline></video>
         </div>
         <div class="d-flex gap-2">
-          <button type="button" on:click={capturePhoto} class="btn btn-primary btn-sm">Capture Photo</button>
-          <button type="button" on:click={stopCameraForPhoto} class="btn btn-outline-secondary btn-sm">Stop Camera</button>
+          <button type="button" on:click={capturePhoto} class="btn btn-primary btn-sm">Ambil Foto</button>
+          <button type="button" on:click={stopCameraForPhoto} class="btn btn-outline-secondary btn-sm">Hentikan Kamera</button>
         </div>
       </div>
     </div>
@@ -184,39 +174,36 @@
   <div class="row g-3">
     <div class="col-12 col-lg-6">
       <div class="card h-100">
-        <div class="card-header">Original Image</div>
+        <div class="card-header">Gambar Asli</div>
         <div class="card-body">
-          <img class="img-fluid" src={imagePreviewUrl} alt="Original to be processed" />
+          <img class="img-fluid" src={imagePreviewUrl} alt="Gambar daun cabai asli" />
         </div>
       </div>
     </div>
     <div class="col-12 col-lg-6">
       <div class="card h-100">
-        <div class="card-header">Processed Image</div>
+        <div class="card-header">Hasil Deteksi</div>
         <div class="card-body">
-          <img class="img-fluid" src={imageResultUrl} alt="Processed result" />
+          <img class="img-fluid" src={imageResultUrl} alt="Hasil deteksi penyakit daun cabai" />
         </div>
       </div>
     </div>
   </div>
 
-  <!-- --- New Section for Detection Summary --- -->
-  <!-- Display summary directly from backend response -->
   {#if detectionResponse && detectionResponse.summary}
     <div class="mt-4 p-3 bg-light rounded border">
-      <h3 class="h5 mb-3">Detection Summary:</h3>
+      <h3 class="h5 mb-3">Ringkasan Deteksi</h3>
       <div class="row">
         <div class="col-md-6">
-          <p class="mb-1"><strong>Total Beans Detected:</strong> {detectionResponse.summary.normal_count + detectionResponse.summary.abnormal_count}</p>
-          <p class="mb-1"><strong>Biji Normal:</strong> {detectionResponse.summary.normal_count} ({formatPercentage(detectionResponse.summary.normal_percentage)}%)</p>
+          <p class="mb-1"><strong>Total Daun Terdeteksi:</strong> {detectionResponse.summary.normal_count + detectionResponse.summary.abnormal_count}</p>
+          <p class="mb-1"><strong>Daun Sehat:</strong> {detectionResponse.summary.normal_count} ({formatPercentage(detectionResponse.summary.normal_percentage)}%)</p>
         </div>
         <div class="col-md-6">
-          <p class="mb-1"><strong>Biji Tidak Normal:</strong> {detectionResponse.summary.abnormal_count} ({formatPercentage(detectionResponse.summary.abnormal_percentage)}%)</p>
+          <p class="mb-1"><strong>Daun Terindikasi Penyakit:</strong> {detectionResponse.summary.abnormal_count} ({formatPercentage(detectionResponse.summary.abnormal_percentage)}%)</p>
         </div>
       </div>
     </div>
   {/if}
-  <!-- --- End of New Section --- -->
 
   <canvas bind:this={canvasElement} class="d-none"></canvas>
 </section>

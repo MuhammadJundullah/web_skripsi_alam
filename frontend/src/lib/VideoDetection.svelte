@@ -4,7 +4,7 @@
 
   let videoFile = null;
   let videoPreviewUrl = null;
-  let videoStatus = "Select a video file or record one.";
+  let videoStatus = "Pilih file video daun cabai atau rekam video baru.";
 
   // Recording state
   let isCameraOpen = false;
@@ -19,15 +19,15 @@
     if (!file) return;
     videoFile = file;
     videoPreviewUrl = URL.createObjectURL(file);
-    videoStatus = `Ready to process ${file.name}.`;
+    videoStatus = `Siap memproses ${file.name}.`;
   }
 
   async function uploadVideo() {
     if (!videoFile) {
-      alert("Please select or record a video file first.");
+      alert("Pilih atau rekam file video terlebih dahulu.");
       return;
     }
-    videoStatus = "Uploading video...";
+    videoStatus = "Mengunggah video...";
     const formData = new FormData();
     formData.append("file", videoFile);
     const apiUrl = `${$apiBaseUrl}/detect/video`;
@@ -39,7 +39,7 @@
       });
       if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
       const data = await response.json();
-      videoStatus = `Upload complete for ${data.original_filename}. Check history for status.`;
+      videoStatus = `Upload selesai untuk ${data.original_filename}. Cek riwayat untuk melihat status proses.`;
       videoFile = null;
       videoPreviewUrl = null;
     } catch (error) {
@@ -54,7 +54,7 @@
       cameraPreviewEl.srcObject = cameraStream;
       isCameraOpen = true;
     } catch (err) {
-      alert("Could not access camera. Please check permissions.");
+      alert("Kamera tidak dapat diakses. Periksa izin perangkat.");
       console.error("Camera access error:", err);
     }
   }
@@ -81,7 +81,7 @@
       const fileName = `recording-${new Date().toISOString()}.webm`;
       videoFile = new File([blob], fileName, { type: blob.type });
       videoPreviewUrl = URL.createObjectURL(blob);
-      videoStatus = `Recording complete. Ready to process ${fileName}.`;
+      videoStatus = `Rekaman selesai. Siap memproses ${fileName}.`;
       closeCamera();
     };
     mediaRecorder.start();
@@ -99,26 +99,26 @@
 
 <div class="card">
   <div class="card-body">
-    <h5 class="card-title">Batch Video Detection</h5>
+    <h5 class="card-title">Deteksi Penyakit dari Video</h5>
     <div class="row g-2 align-items-end mb-3">
       <div class="col">
-        <label class="form-label" for="video-upload">Choose a video file</label>
+        <label class="form-label" for="video-upload">Pilih File Video</label>
         <input id="video-upload" type="file" accept="video/*" on:change={handleVideoSelect} class="form-control" />
       </div>
       <div class="col-auto"> 
-        <span class="text-muted">OR</span>
+        <span class="text-muted">ATAU</span>
       </div>
       <div class="col-auto">
         <div class="form-label" aria-hidden="true">&nbsp;</div>
-        <button type="button" class="btn btn-secondary" on:click={openCamera}>Record from Camera</button>
+        <button type="button" class="btn btn-secondary" on:click={openCamera}>Rekam dari Kamera</button>
       </div>
     </div>
 
     {#if videoPreviewUrl}
       <div class="mb-3">
-        <h6>Preview & Upload</h6>
+        <h6>Pratinjau dan Upload</h6>
         <video class="w-100 border rounded" src={videoPreviewUrl} controls muted></video>
-        <button type="button" on:click={uploadVideo} class="btn btn-primary mt-2">Detect Objects in Video</button>
+        <button type="button" on:click={uploadVideo} class="btn btn-primary mt-2">Deteksi Penyakit pada Video</button>
       </div>
     {/if}
 
@@ -132,18 +132,18 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Record Video</h5>
+          <h5 class="modal-title">Rekam Video Daun Cabai</h5>
           <button type="button" class="btn-close" on:click={closeCamera}></button>
         </div>
         <div class="modal-body">
           <video bind:this={cameraPreviewEl} class="w-100" autoplay muted playsinline></video>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" on:click={closeCamera}>Close</button>
+          <button type="button" class="btn btn-secondary" on:click={closeCamera}>Tutup</button>
           {#if isRecording}
-            <button type="button" class="btn btn-danger" on:click={stopRecording}>Stop Recording</button>
+            <button type="button" class="btn btn-danger" on:click={stopRecording}>Hentikan Rekaman</button>
           {:else}
-            <button type="button" class="btn btn-success" on:click={startRecording}>Start Recording</button>
+            <button type="button" class="btn btn-success" on:click={startRecording}>Mulai Rekam</button>
           {/if}
         </div>
       </div>

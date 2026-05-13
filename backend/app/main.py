@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, WebSocket
+from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, WebSocket, Request
 from fastapi.responses import StreamingResponse, Response, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -25,7 +25,7 @@ load_dotenv()
 # Create all database tables on startup
 database.create_db_and_tables()
 
-app = FastAPI(title="Coffee Bean Detection API")
+app = FastAPI(title="Deteksi Penyakit Daun Cabai API")
 
 # CORS Middleware
 app.add_middleware(
@@ -58,6 +58,16 @@ try:
 except Exception as e:
     print(f"Error loading YOLO model: {e}")
     model = None
+
+
+def is_healthy_class(class_name: str) -> bool:
+    normalized = class_name.strip().lower()
+    healthy_keywords = ("sehat", "healthy", "normal", "tanpa penyakit", "non-penyakit")
+    disease_keywords = ("penyakit", "disease", "busuk", "bercak", "virus", "jamur")
+
+    if any(keyword in normalized for keyword in disease_keywords):
+        return False
+    return any(keyword in normalized for keyword in healthy_keywords)
 
 # --- Helper to get confidence setting ---
 def get_model_confidence(db: Session) -> float:
@@ -99,7 +109,11 @@ async def detect_video_endpoint(file: UploadFile = File(...), db: Session = Depe
 
 # --- Image Detection Endpoint ---
 @app.post("/detect/image", response_model=schemas.ImageDetectionResponse)
-async def detect_image_endpoint(file: UploadFile = File(...), db: Session = Depends(dependencies.get_db)):
+async def detect_image_endpoint(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(dependencies.get_db)
+):
     if not model:
         raise HTTPException(status_code=500, detail="YOLO model not loaded.")
     
@@ -128,9 +142,7 @@ async def detect_image_endpoint(file: UploadFile = File(...), db: Session = Depe
                 # Get bounding box coordinates
                 x1, y1, x2, y2 = map(float, box.xyxy[0].tolist())
                 
-                # Categorize as normal or abnormal
-                # *** ASSUMPTION: 'normal' is the only class considered 'good'. Adjust if needed. ***
-                is_normal = class_name == 'Biji Normal'
+                is_normal = is_healthy_class(class_name)
                 if is_normal:
                     normal_count += 1
                 else:
@@ -173,9 +185,8 @@ async def detect_image_endpoint(file: UploadFile = File(...), db: Session = Depe
         img_save_path = os.path.join(OUTPUTS_DIR, img_filename)
         annotated_image_pil.save(img_save_path, format='JPEG')
         
-        # Construct the ABSOLUTE URL for the saved image
-        # This ensures the frontend can access it regardless of its origin
-        image_url = f"{BACKEND_BASE_URL}/outputs/{img_filename}"
+        request_base_url = str(request.base_url).rstrip("/")
+        image_url = f"{request_base_url}/outputs/{img_filename}"
 
         # Prepare the response
         response_data = schemas.ImageDetectionResponse(

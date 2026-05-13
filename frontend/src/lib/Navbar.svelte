@@ -22,7 +22,7 @@
                     <Link class="nav-link" to="/" on:click={toggleNav}>Dashboard</Link>
                 </li>
                 <li class="nav-item">
-                    <Link class="nav-link" to="/live" on:click={toggleNav}>Deteksi Real-time</Link>
+                    <Link class="nav-link" to="/live" on:click={toggleNav}>Deteksi Langsung</Link>
                 </li>
                 <li class="nav-item">
                     <Link class="nav-link" to="/image" on:click={toggleNav}>Deteksi Gambar</Link>
