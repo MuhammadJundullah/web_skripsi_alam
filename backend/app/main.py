@@ -283,51 +283,53 @@ def get_system_resources_data():
         "timestamp": psutil.boot_time()
     }
 
+@app.websocket("/ws/monitor")
+async def websocket_monitor_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            stats = get_system_resources_data()
+            await websocket.send_json({"type": "monitor_stats", "data": stats})
+            await asyncio.sleep(2)
+    except (asyncio.CancelledError, ConnectionResetError):
+        pass
+    except Exception as e:
+        print(f"Error in monitor websocket: {e}")
+    finally:
+        try:
+            await websocket.close()
+        except RuntimeError:
+            pass
+
 @app.websocket("/ws/stream/realtime")
-async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(dependencies.get_db)):
+async def websocket_stream_endpoint(websocket: WebSocket, db: Session = Depends(dependencies.get_db)):
     await websocket.accept()
     if not model:
         await websocket.send_json({"error": "YOLO model not loaded."})
         await websocket.close()
         return
-    
+
     confidence = get_model_confidence(db)
 
-    async def send_monitor_stats_task():
-        while True:
-            try:
-                stats = get_system_resources_data()
-                await websocket.send_json({"type": "monitor_stats", "data": stats})
-                await asyncio.sleep(2)
-            except (asyncio.CancelledError, ConnectionResetError):
-                break
-            except Exception as e:
-                print(f"Error in monitor stats task: {e}")
-                break
-
-    async def process_video_frames_task():
-        while True:
-            try:
-                data = await websocket.receive_bytes()
-                nparr = np.frombuffer(data, np.uint8)
-                frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-                if frame is None: continue
-                results = model(frame, verbose=False, conf=confidence, iou=0.45)
-                annotated_frame = results[0].plot(conf=True, boxes=True)
-                ret, buffer = cv2.imencode('.jpg', annotated_frame)
-                if ret: await websocket.send_bytes(buffer.tobytes())
-            except (asyncio.CancelledError, ConnectionResetError):
-                break
-            except Exception as e:
-                print(f"Error in video frames task: {e}")
-                break
-
-    monitor_task = asyncio.create_task(send_monitor_stats_task())
-    video_task = asyncio.create_task(process_video_frames_task())
     try:
-        await asyncio.gather(monitor_task, video_task)
+        while True:
+            data = await websocket.receive_bytes()
+            nparr = np.frombuffer(data, np.uint8)
+            frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            if frame is None:
+                continue
+
+            results = model(frame, verbose=False, conf=confidence, iou=0.45)
+            annotated_frame = results[0].plot(conf=True, boxes=True)
+            ret, buffer = cv2.imencode('.jpg', annotated_frame)
+            if ret:
+                await websocket.send_bytes(buffer.tobytes())
+    except (asyncio.CancelledError, ConnectionResetError):
+        pass
+    except Exception as e:
+        print(f"Error in realtime stream websocket: {e}")
     finally:
-        monitor_task.cancel()
-        video_task.cancel()
-        try: await websocket.close()
-        except RuntimeError: pass
+        try:
+            await websocket.close()
+        except RuntimeError:
+            pass

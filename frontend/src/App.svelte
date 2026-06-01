@@ -28,7 +28,7 @@
       if (url && !monitorSocket) {
         try {
           const wsProtocol = url.startsWith('https') ? 'wss:' : 'ws:';
-          const wsMonitorUrl = `${wsProtocol}//${url.split('//')[1]}/ws/stream/realtime`;
+          const wsMonitorUrl = `${wsProtocol}//${url.split('//')[1]}/ws/monitor`;
           
           monitorSocket = new WebSocket(wsMonitorUrl);
 
