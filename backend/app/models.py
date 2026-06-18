@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy import Column, Integer, String, DateTime, Float, func
 from .database import Base
 
 class DetectionJob(Base):
@@ -9,6 +9,10 @@ class DetectionJob(Base):
     filename = Column(String, nullable=False, unique=True) # Randomized internal filename
     original_filename = Column(String, nullable=False) # User's original filename
     status = Column(String, default="PENDING")
+    progress_percent = Column(Float, default=0.0)
+    processed_frames = Column(Integer, default=0)
+    total_frames = Column(Integer, default=0)
+    error_message = Column(String, nullable=True)
     upload_time = Column(DateTime, server_default=func.now())
     output_path = Column(String, nullable=True)
     completion_time = Column(DateTime, nullable=True)

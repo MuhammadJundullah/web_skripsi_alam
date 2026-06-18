@@ -13,6 +13,7 @@
   let recordedChunks = [];
   let cameraStream;
   let cameraPreviewEl;
+  let selectedFacingMode = 'environment'; // 'user' or 'environment'
 
   function handleVideoSelect(e) {
     const file = e.target.files[0];
@@ -50,7 +51,15 @@
 
   async function openCamera() {
     try {
-      cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const constraints = {
+        video: {
+          facingMode: { ideal: selectedFacingMode },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: true
+      };
+      cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
       cameraPreviewEl.srcObject = cameraStream;
       isCameraOpen = true;
     } catch (err) {
@@ -97,53 +106,70 @@
   });
 </script>
 
-<div class="card">
-  <div class="card-body">
-    <h5 class="card-title">Deteksi Penyakit dari Video</h5>
-    <div class="row g-2 align-items-end mb-3">
-      <div class="col">
-        <label class="form-label" for="video-upload">Pilih File Video</label>
-        <input id="video-upload" type="file" accept="video/*" on:change={handleVideoSelect} class="form-control" />
+<div class="card bg-white shadow-sm rounded-3">
+  <div class="card-body p-4">
+    <h5 class="card-title h4 mb-4 text-primary">Deteksi Penyakit dari Video</h5>
+    <div class="row g-3 align-items-end mb-4">
+      <div class="col-12 col-md-4">
+        <label class="form-label fw-bold" for="video-upload">Pilih File Video</label>
+        <input id="video-upload" type="file" accept="video/*" on:change={handleVideoSelect} class="form-control form-control-sm" />
       </div>
-      <div class="col-auto"> 
-        <span class="text-muted">ATAU</span>
+      
+      <div class="col-12 col-md-3">
+        <label for="video-camera-mode" class="form-label fw-bold">Mode Kamera</label>
+        <select id="video-camera-mode" class="form-select form-select-sm" bind:value={selectedFacingMode} disabled={isCameraOpen}>
+          <option value="environment">Kamera Belakang</option>
+          <option value="user">Kamera Depan</option>
+        </select>
       </div>
-      <div class="col-auto">
-        <div class="form-label" aria-hidden="true">&nbsp;</div>
-        <button type="button" class="btn btn-secondary" on:click={openCamera}>Rekam dari Kamera</button>
+
+      <div class="col-12 col-md-auto">
+        <button type="button" class="btn btn-outline-secondary btn-sm w-100" on:click={openCamera}>Buka Kamera & Rekam</button>
       </div>
     </div>
 
     {#if videoPreviewUrl}
-      <div class="mb-3">
-        <h6>Pratinjau dan Upload</h6>
-        <video class="w-100 border rounded" src={videoPreviewUrl} controls muted></video>
-        <button type="button" on:click={uploadVideo} class="btn btn-primary mt-2">Deteksi Penyakit pada Video</button>
+      <div class="mb-4 p-3 bg-light rounded border">
+        <h6 class="fw-bold mb-3">Pratinjau Video</h6>
+        <div class="ratio ratio-16x9 bg-dark rounded overflow-hidden shadow-sm">
+          <video class="w-100 h-100 object-fit-contain" src={videoPreviewUrl} controls muted></video>
+        </div>
+        <div class="d-grid mt-3">
+          <button type="button" on:click={uploadVideo} class="btn btn-primary">Mulai Deteksi Penyakit pada Video</button>
+        </div>
       </div>
     {/if}
 
-    <p class="form-text mb-0">Status: {videoStatus}</p>
+    <div class="alert alert-info py-2 px-3 mb-0">
+      <i class="bi bi-info-circle me-2"></i>
+      <span class="small">Status: {videoStatus}</span>
+    </div>
   </div>
 </div>
 
 {#if isCameraOpen}
   <div class="modal-backdrop fade show"></div>
-  <div class="modal fade show" style="display: block;">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
+  <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-primary text-white">
           <h5 class="modal-title">Rekam Video Daun Cabai</h5>
-          <button type="button" class="btn-close" on:click={closeCamera}></button>
+          <button type="button" class="btn-close btn-close-white" on:click={closeCamera}></button>
         </div>
-        <div class="modal-body">
-          <video bind:this={cameraPreviewEl} class="w-100" autoplay muted playsinline></video>
+        <div class="modal-body p-1 bg-dark">
+          <div class="ratio ratio-4x3 rounded overflow-hidden">
+            <video bind:this={cameraPreviewEl} class="w-100 h-100 object-fit-contain" autoplay muted playsinline></video>
+          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" on:click={closeCamera}>Tutup</button>
+        <div class="modal-footer justify-content-center bg-light">
+          <button type="button" class="btn btn-outline-secondary px-4" on:click={closeCamera}>Batal</button>
           {#if isRecording}
-            <button type="button" class="btn btn-danger" on:click={stopRecording}>Hentikan Rekaman</button>
+            <button type="button" class="btn btn-danger px-4" on:click={stopRecording}>
+              <span class="spinner-grow spinner-grow-sm me-2" role="status" aria-hidden="true"></span>
+              Hentikan Rekaman
+            </button>
           {:else}
-            <button type="button" class="btn btn-success" on:click={startRecording}>Mulai Rekam</button>
+            <button type="button" class="btn btn-success px-4" on:click={startRecording}>Mulai Rekam Video</button>
           {/if}
         </div>
       </div>

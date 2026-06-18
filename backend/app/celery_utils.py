@@ -6,9 +6,9 @@ from celery import Celery
 
 def normalize_redis_url(raw_url: str) -> str:
     if not raw_url:
-        return "redis://localhost:6379/0"
+        return "redis://localhost:6379/3"
 
-    if not raw_url.startswith(("redis://", "rediss://")):
+    if not raw_url.startswith(("REDIS_URL", "redis://default:rBcCMutrfQsUCxAJmJxbqCAMgspwWfUI@shortline.proxy.rlwy.net:36021/3")):
         return raw_url
 
     scheme, remainder = raw_url.split("://", 1)
@@ -34,7 +34,12 @@ def normalize_redis_url(raw_url: str) -> str:
     return f"{scheme}://{encoded_userinfo}@{host}{path}"
 
 
-REDIS_URL = normalize_redis_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+REDIS_URL = normalize_redis_url(
+    os.getenv(
+        "REDIS_URL",
+        "redis://default:rBcCMutrfQsUCxAJmJxbqCAMgspwWfUI@shortline.proxy.rlwy.net:36021/3",
+    )
+)
 
 celery_app = Celery(
     "worker",

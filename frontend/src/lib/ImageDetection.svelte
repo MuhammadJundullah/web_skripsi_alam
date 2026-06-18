@@ -16,6 +16,7 @@
   
   // This variable will hold the full JSON response from the backend, including the summary.
   let detectionResponse = null;
+  let selectedFacingMode = 'environment'; // 'user', 'environment', or 'manual'
 
   // Helper function to format percentage
   function formatPercentage(value) {
@@ -58,42 +59,37 @@
         throw new Error(errorMsg);
       }
       
-      // Parse the JSON response from the backend
       const responseJson = await response.json();
-      
-      // Update component state with data from backend response
       imageResultUrl = responseJson.imageUrl;
-      console.log('Image URL set in frontend:', imageResultUrl); // Log the URL for debugging
-      detectionResults = responseJson.detections; // Keep this if you want to display individual detections
-      detectionResponse = responseJson; // Store the full response to access summary directly
-
-      // Log the received detection response and summary for debugging
-      console.log('Full detection response from backend:', detectionResponse);
-      if (detectionResponse && detectionResponse.summary) {
-        console.log('Summary from backend:', detectionResponse.summary);
-      }
-
+      detectionResults = responseJson.detections;
+      detectionResponse = responseJson;
       imageStatus = "Pemrosesan selesai. Hasil deteksi tersedia.";
     } catch (error) {
       console.error("Image upload or detection error:", error);
       imageStatus = `Error: ${error.message}`;
-      detectionResults = []; // Clear results on error
-      detectionResponse = null; // Clear response on error
+      detectionResults = [];
+      detectionResponse = null;
     }
   }
 
   export async function startCameraForPhoto() {
-      imageStatus = "Menyalakan kamera untuk mengambil foto...";
+    imageStatus = "Menyalakan kamera untuk mengambil foto...";
     try {
       isCameraActiveForPhoto = true;
       await tick();
       const constraints = {
         video: {
-          width: 640,
-          height: 480,
-          deviceId: selectedCameraId ? { exact: selectedCameraId } : undefined
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         }
       };
+
+      if (selectedFacingMode === 'manual' && selectedCameraId) {
+        constraints.video.deviceId = { exact: selectedCameraId };
+      } else {
+        constraints.video.facingMode = { ideal: selectedFacingMode };
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       videoElementForPhoto.srcObject = stream;
       photoCaptureStream = stream;
@@ -115,9 +111,9 @@
       const capturedFile = new File([blob], "captured_photo.png", { type: "image/png" });
       imageFile = capturedFile;
       imagePreviewUrl = URL.createObjectURL(capturedFile);
-      imageResultUrl = null; // Clear previous results
-      detectionResults = []; // Clear previous detection results
-      detectionResponse = null; // Clear previous full response
+      imageResultUrl = null;
+      detectionResults = [];
+      detectionResponse = null;
       imageStatus = "Foto berhasil diambil. Siap untuk deteksi.";
       stopCameraForPhoto();
     }, 'image/png');
@@ -140,30 +136,36 @@
   <h2 class="h4 mb-3">Deteksi Penyakit pada Gambar Daun Cabai</h2>
 
   <div class="row g-2 align-items-end">
-    <div class="col-12 col-md-5">
+    <div class="col-12 col-md-4">
       <label class="form-label" for="image-upload">Pilih Gambar Daun Cabai</label>
       <input id="image-upload" type="file" accept="image/*" on:change={handleImageSelect} class="form-control form-control-sm" />
     </div>
-    <div class="col-12 col-md-auto">
-      <div class="form-label d-block invisible" aria-hidden="true">.</div>
-      <button type="button" on:click={startCameraForPhoto} disabled={isCameraActiveForPhoto} class="btn btn-secondary btn-sm">Ambil Foto dari Kamera</button>
+    <div class="col-12 col-md-3">
+      <label for="photo-camera-mode" class="form-label">Mode Kamera</label>
+      <select id="photo-camera-mode" class="form-select form-select-sm" bind:value={selectedFacingMode} disabled={isCameraActiveForPhoto}>
+        <option value="environment">Kamera Belakang</option>
+        <option value="user">Kamera Depan</option>
+        <option value="manual">Manual (Pilih Perangkat)</option>
+      </select>
     </div>
     <div class="col-12 col-md-auto">
-      <div class="form-label d-block invisible" aria-hidden="true">.</div>
-      <button type="button" on:click={uploadImage} disabled={!imageFile} class="btn btn-primary btn-sm">Deteksi Penyakit pada Gambar</button>
+      <button type="button" on:click={startCameraForPhoto} disabled={isCameraActiveForPhoto} class="btn btn-secondary btn-sm">Buka Kamera</button>
+    </div>
+    <div class="col-12 col-md-auto">
+      <button type="button" on:click={uploadImage} disabled={!imageFile} class="btn btn-primary btn-sm">Deteksi Penyakit</button>
     </div>
   </div>
 
   {#if isCameraActiveForPhoto}
-    <div class="card my-3">
-      <div class="card-header">Ambil Gambar dari Kamera</div>
-      <div class="card-body">
-        <div class="ratio ratio-4x3 mb-2">
-          <video class="w-100 h-100" bind:this={videoElementForPhoto} autoplay muted playsinline></video>
+    <div class="card my-3 border-primary">
+      <div class="card-header bg-primary text-white">Ambil Gambar dari Kamera</div>
+      <div class="card-body p-1">
+        <div class="ratio ratio-4x3 bg-dark rounded overflow-hidden mb-2">
+          <video class="w-100 h-100 object-fit-contain" bind:this={videoElementForPhoto} autoplay muted playsinline></video>
         </div>
-        <div class="d-flex gap-2">
-          <button type="button" on:click={capturePhoto} class="btn btn-primary btn-sm">Ambil Foto</button>
-          <button type="button" on:click={stopCameraForPhoto} class="btn btn-outline-secondary btn-sm">Hentikan Kamera</button>
+        <div class="p-2 d-flex gap-2 justify-content-center">
+          <button type="button" on:click={capturePhoto} class="btn btn-primary">Ambil Foto</button>
+          <button type="button" on:click={stopCameraForPhoto} class="btn btn-outline-secondary">Batal</button>
         </div>
       </div>
     </div>
@@ -174,32 +176,44 @@
   <div class="row g-3">
     <div class="col-12 col-lg-6">
       <div class="card h-100">
-        <div class="card-header">Gambar Asli</div>
-        <div class="card-body">
-          <img class="img-fluid" src={imagePreviewUrl} alt="Gambar daun cabai asli" />
+        <div class="card-header bg-light">Gambar Asli</div>
+        <div class="card-body p-1">
+          <div class="ratio ratio-4x3 bg-light rounded overflow-hidden">
+            {#if imagePreviewUrl}
+              <img class="w-100 h-100 object-fit-contain" src={imagePreviewUrl} alt="Gambar daun cabai asli" />
+            {:else}
+              <div class="d-flex align-items-center justify-content-center h-100 text-muted">Belum ada gambar</div>
+            {/if}
+          </div>
         </div>
       </div>
     </div>
     <div class="col-12 col-lg-6">
       <div class="card h-100">
-        <div class="card-header">Hasil Deteksi</div>
-        <div class="card-body">
-          <img class="img-fluid" src={imageResultUrl} alt="Hasil deteksi penyakit daun cabai" />
+        <div class="card-header bg-light">Hasil Deteksi</div>
+        <div class="card-body p-1">
+          <div class="ratio ratio-4x3 bg-light rounded overflow-hidden">
+            {#if imageResultUrl}
+              <img class="w-100 h-100 object-fit-contain" src={imageResultUrl} alt="Hasil deteksi penyakit daun cabai" />
+            {:else}
+              <div class="d-flex align-items-center justify-content-center h-100 text-muted">Hasil akan muncul di sini</div>
+            {/if}
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   {#if detectionResponse && detectionResponse.summary}
-    <div class="mt-4 p-3 bg-light rounded border">
-      <h3 class="h5 mb-3">Ringkasan Deteksi</h3>
+    <div class="mt-4 p-3 bg-light rounded border shadow-sm">
+      <h3 class="h5 mb-3 border-bottom pb-2">Ringkasan Deteksi</h3>
       <div class="row">
         <div class="col-md-6">
-          <p class="mb-1"><strong>Total Daun Terdeteksi:</strong> {detectionResponse.summary.normal_count + detectionResponse.summary.abnormal_count}</p>
-          <p class="mb-1"><strong>Daun Sehat:</strong> {detectionResponse.summary.normal_count} ({formatPercentage(detectionResponse.summary.normal_percentage)}%)</p>
+          <p class="mb-1 text-primary"><strong>Total Daun:</strong> {detectionResponse.summary.normal_count + detectionResponse.summary.abnormal_count}</p>
+          <p class="mb-1 text-success"><strong>Daun Sehat:</strong> {detectionResponse.summary.normal_count} ({formatPercentage(detectionResponse.summary.normal_percentage)}%)</p>
         </div>
         <div class="col-md-6">
-          <p class="mb-1"><strong>Daun Terindikasi Penyakit:</strong> {detectionResponse.summary.abnormal_count} ({formatPercentage(detectionResponse.summary.abnormal_percentage)}%)</p>
+          <p class="mb-1 text-danger"><strong>Terindikasi Penyakit:</strong> {detectionResponse.summary.abnormal_count} ({formatPercentage(detectionResponse.summary.abnormal_percentage)}%)</p>
         </div>
       </div>
     </div>

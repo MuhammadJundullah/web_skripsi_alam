@@ -4,6 +4,7 @@ from .database import SessionLocal
 from ultralytics import YOLO
 import os
 import cv2
+import time
 
 # Define base directory for uploads and outputs
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -45,6 +46,12 @@ def process_video_task(job_id: int, confidence: float = 0.1):
         fps = int(cap.get(cv2.CAP_PROP_FPS))
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+        processed_frames = 0
+        last_progress_update = time.monotonic()
+        progress_update_interval = 1.0
+
+        crud.update_job_progress(db, job_id, processed_frames, total_frames)
         
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
@@ -57,6 +64,12 @@ def process_video_task(job_id: int, confidence: float = 0.1):
             results = model(frame, verbose=False, conf=confidence)
             annotated_frame = results[0].plot()
             out.write(annotated_frame)
+            processed_frames += 1
+
+            now = time.monotonic()
+            if processed_frames == total_frames or now - last_progress_update >= progress_update_interval:
+                crud.update_job_progress(db, job_id, processed_frames, total_frames)
+                last_progress_update = now
 
         cap.release()
         out.release()
@@ -73,6 +86,6 @@ def process_video_task(job_id: int, confidence: float = 0.1):
 
     except Exception as e:
         print(f"Error during video processing task for job {job_id}: {e}")
-        crud.complete_job(db, job_id, "FAILURE")
+        crud.complete_job(db, job_id, "FAILURE", error_message=str(e))
     finally:
         db.close()

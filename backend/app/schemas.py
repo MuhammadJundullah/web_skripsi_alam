@@ -5,12 +5,17 @@ from typing import Optional, List
 # Base schema for a Job
 class JobBase(BaseModel):
     filename: str
+    original_filename: str
 
 # Schema for reading a Job from the API
 class Job(JobBase):
     id: int
     task_id: Optional[str] = None
     status: str
+    progress_percent: float = 0.0
+    processed_frames: int = 0
+    total_frames: int = 0
+    error_message: Optional[str] = None
     upload_time: datetime
     output_path: Optional[str] = None
     completion_time: Optional[datetime] = None
