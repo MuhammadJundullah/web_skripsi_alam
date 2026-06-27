@@ -6,6 +6,16 @@
   let error = null;
   let isLoading = true;
 
+  let activeJob = null;
+
+  function playVideo(job) {
+    activeJob = job;
+  }
+
+  function closeVideoModal() {
+    activeJob = null;
+  }
+
   async function fetchHistory() {
     try {
       const response = await fetch(`${$apiBaseUrl}/history`);
@@ -132,6 +142,7 @@
               <td>{formatDateTime(job.upload_time)}</td>
               <td class="actions">
                 {#if job.status === 'SUCCESS'}
+                  <button on:click={() => playVideo(job)} class="btn btn-sm btn-outline-primary">Putar</button>
                   <a href="{$apiBaseUrl}/download/{job.id}" class="btn btn-sm btn-outline-success">Unduh</a>
                 {/if}
                 {#if job.status === 'FAILURE'}
@@ -146,6 +157,36 @@
     </div>
   {/if}
 </div>
+
+{#if activeJob}
+  <div class="modal-backdrop fade show" style="z-index: 1040;"></div>
+  <div class="modal fade show" style="display: block; z-index: 1050;" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Hasil Deteksi: {activeJob.original_filename || activeJob.filename}</h5>
+          <button type="button" class="btn-close" aria-label="Close" on:click={closeVideoModal}></button>
+        </div>
+        <div class="modal-body text-center bg-black p-0 overflow-hidden" style="min-height: 200px;">
+          <!-- svelte-ignore a11y-media-has-caption -->
+          <video 
+            src="{$apiBaseUrl}/outputs/output_{activeJob.filename}" 
+            controls 
+            autoplay 
+            class="w-100 h-100" 
+            style="max-height: 70vh; object-fit: contain; display: block;"
+          >
+            Browser Anda tidak mendukung tag video HTML5.
+          </video>
+        </div>
+        <div class="modal-footer">
+          <a href="{$apiBaseUrl}/download/{activeJob.id}" class="btn btn-success">Unduh Video</a>
+          <button type="button" class="btn btn-secondary" on:click={closeVideoModal}>Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <style>
   .history-container { margin-top: 2rem; padding: 1.5rem; background-color: #f9f9f9; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
