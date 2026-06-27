@@ -17,23 +17,44 @@
   export let intervalOptions;
 
   let canvasElement; // Managed internally by RealtimeStreaming
+  let selectedFacingMode = 'environment'; // 'user', 'environment', or 'manual'
+
+  async function refreshCameras() {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      availableCameras = devices.filter(device => device.kind === 'videoinput');
+      if (availableCameras.length > 0 && !selectedCameraId) {
+        selectedCameraId = availableCameras[0].deviceId;
+      }
+    } catch (error) {
+      console.error("Error enumerating media devices.", error);
+    }
+  }
 
   // Re-export functions that need to be called from parent
   export function startStreaming() {
-    // Logic from App.svelte's startStreaming
     if (isStreaming) return;
     streamingStatus = "Menyalakan kamera...";
     try {
       const constraints = {
         video: {
-          width: 320,
-          height: 240,
-          deviceId: selectedCameraId ? { exact: selectedCameraId } : undefined
+          width: { ideal: 640 },
+          height: { ideal: 480 },
         }
       };
+
+      if (selectedFacingMode === 'manual' && selectedCameraId) {
+        constraints.video.deviceId = { exact: selectedCameraId };
+      } else {
+        constraints.video.facingMode = { ideal: selectedFacingMode };
+      }
+
       navigator.mediaDevices.getUserMedia(constraints).then(stream => {
         videoElement.srcObject = stream;
         videoElement.play().then(() => {
+          // Refresh labels after permission granted
+          refreshCameras();
+          
           streamingStatus = "Menghubungkan ke server...";
           const url = new URL($apiBaseUrl);
           const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -78,7 +99,6 @@
   }
 
   export function stopStreaming(closeSocket = true) {
-    // Logic from App.svelte's stopStreaming
     if (!isStreaming && !videoElement?.srcObject) return;
     isStreaming = false;
     clearInterval(intervalId);
@@ -121,18 +141,16 @@
   }
 
   onMount(() => {
-    // Initial camera load logic from App.svelte's onMount
-    navigator.mediaDevices.enumerateDevices().then(devices => {
-      availableCameras = devices.filter(device => device.kind === 'videoinput');
-      if (availableCameras.length > 0 && !selectedCameraId) {
-        selectedCameraId = availableCameras[0].deviceId;
-      }
-    }).catch(error => {
-      console.error("Error enumerating media devices.", error);
-    });
+    refreshCameras();
+    if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+      navigator.mediaDevices.addEventListener('devicechange', refreshCameras);
+    }
   });
 
   onDestroy(() => {
+    if (navigator.mediaDevices && navigator.mediaDevices.removeEventListener) {
+      navigator.mediaDevices.removeEventListener('devicechange', refreshCameras);
+    }
     stopStreaming();
   });
 </script>
@@ -160,8 +178,19 @@
       </select>
     </div>
 
-    <div class="col-12 col-md-4">
-      <label for="camera-select" class="form-label mb-1">Kamera</label>
+    <div class="col-12 col-md-3">
+      <label for="camera-mode-select" class="form-label mb-1">Mode Kamera</label>
+      <select id="camera-mode-select" class="form-select form-select-sm"
+              bind:value={selectedFacingMode} disabled={isStreaming}>
+        <option value="environment">Kamera Belakang</option>
+        <option value="user">Kamera Depan</option>
+        <option value="manual">Manual (Pilih Perangkat)</option>
+      </select>
+    </div>
+
+    {#if selectedFacingMode === 'manual'}
+    <div class="col-12 col-md-3">
+      <label for="camera-select" class="form-label mb-1">Pilih Perangkat</label>
       <select id="camera-select" class="form-select form-select-sm"
               bind:value={selectedCameraId} disabled={isStreaming || availableCameras.length === 0}>
         {#if availableCameras.length === 0}
@@ -172,6 +201,7 @@
         {/each}
       </select>
     </div>
+    {/if}
   </div>
 
   <p class="text-muted small mt-2 mb-3">Status: {streamingStatus}</p>
@@ -179,10 +209,10 @@
   <div class="row g-3">
     <div class="col-12 col-lg-6">
       <div class="card h-100">
-        <div class="card-header">Kamera Langsung</div>
-        <div class="card-body">
-          <div class="ratio ratio-4x3">
-            <video class="w-100 h-100" bind:this={videoElement} autoplay muted playsinline></video>
+        <div class="card-header bg-light">Kamera Langsung</div>
+        <div class="card-body p-1">
+          <div class="ratio ratio-4x3 bg-dark rounded overflow-hidden">
+            <video class="w-100 h-100 object-fit-contain" bind:this={videoElement} autoplay muted playsinline></video>
           </div>
         </div>
       </div>
@@ -190,9 +220,11 @@
 
     <div class="col-12 col-lg-6">
       <div class="card h-100">
-        <div class="card-header">Hasil Deteksi Langsung</div>
-        <div class="card-body">
-          <img class="img-fluid border" bind:this={processedImageElement} alt="Hasil deteksi real-time penyakit daun cabai" />
+        <div class="card-header bg-light">Hasil Deteksi Langsung</div>
+        <div class="card-body p-1">
+          <div class="ratio ratio-4x3 bg-dark rounded overflow-hidden">
+            <img class="w-100 h-100 object-fit-contain" bind:this={processedImageElement} alt="Hasil deteksi real-time penyakit daun cabai" />
+          </div>
         </div>
       </div>
     </div>
