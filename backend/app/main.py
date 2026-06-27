@@ -266,7 +266,9 @@ async def download_video_endpoint(job_id: int, db: Session = Depends(dependencie
         with open(file_path, mode="rb") as file_like:
             while chunk := file_like.read(chunk_size):
                 yield chunk
-    headers = {'Content-Disposition': f'attachment; filename="{job.original_filename}"'}
+    original_basename, _ = os.path.splitext(job.original_filename)
+    download_filename = f"{original_basename}.mp4"
+    headers = {'Content-Disposition': f'attachment; filename="{download_filename}"'}
     return StreamingResponse(videofile_iterator(job.output_path), media_type="video/mp4", headers=headers)
 
 # --- WebSocket and Monitoring ---

@@ -37,7 +37,9 @@ def process_video_task(job_id: int, confidence: float = 0.1):
             raise ValueError("YOLO model not loaded in worker.")
 
         video_path = os.path.join(UPLOADS_DIR, job.filename)
-        output_path = os.path.join(OUTPUTS_DIR, f"output_{job.filename}")
+        # Always output as .mp4 with H.264 (avc1) codec for browser playability
+        output_filename = f"output_{os.path.splitext(job.filename)[0]}.mp4"
+        output_path = os.path.join(OUTPUTS_DIR, output_filename)
 
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
@@ -53,8 +55,13 @@ def process_video_task(job_id: int, confidence: float = 0.1):
 
         crud.update_job_progress(db, job_id, processed_frames, total_frames)
         
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        # Initialize video writer with avc1 codec, fallback to mp4v if avc1 fails
+        fourcc = cv2.VideoWriter_fourcc(*'avc1')
         out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+        if not out.isOpened():
+            print("Warning: avc1 codec is not supported by cv2.VideoWriter. Falling back to mp4v.")
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
         while cap.isOpened():
             ret, frame = cap.read()

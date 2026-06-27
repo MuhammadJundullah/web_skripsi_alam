@@ -16,6 +16,12 @@
     activeJob = null;
   }
 
+  function getOutputVideoUrl(job) {
+    if (!job || !job.filename) return '';
+    const baseName = job.filename.substring(0, job.filename.lastIndexOf('.')) || job.filename;
+    return `${$apiBaseUrl}/outputs/output_${baseName}.mp4`;
+  }
+
   async function fetchHistory() {
     try {
       const response = await fetch(`${$apiBaseUrl}/history`);
@@ -170,7 +176,7 @@
         <div class="modal-body text-center bg-black p-0 overflow-hidden" style="min-height: 200px;">
           <!-- svelte-ignore a11y-media-has-caption -->
           <video 
-            src="{$apiBaseUrl}/outputs/output_{activeJob.filename}" 
+            src={getOutputVideoUrl(activeJob)} 
             controls 
             autoplay 
             class="w-100 h-100" 
