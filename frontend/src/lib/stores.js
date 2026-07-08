@@ -1,8 +1,8 @@
 import { writable } from 'svelte/store';
 
 // Default API base URL, will be overwritten by initialization
-export const apiBaseUrl = writable('https://sayidj-backend-alam.hf.space');
-// export const apiBaseUrl = writable('http://192.198.1.24:8000');
+// export const apiBaseUrl = writable('https://sayidj-backend-alam.hf.space');
+export const apiBaseUrl = writable('http://127.0.0.1:8000');
 
 
 // Store for server stats
